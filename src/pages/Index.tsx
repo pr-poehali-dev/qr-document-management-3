@@ -36,13 +36,13 @@ const ROLE_PASSWORDS: Record<Exclude<UserRole, 'client' | null>, string> = {
 };
 
 const ROLE_COLORS: Record<Exclude<UserRole, null>, string> = {
-  'client': 'bg-blue-500',
-  'cashier': 'bg-green-500',
-  'head-cashier': 'bg-emerald-600',
-  'admin': 'bg-purple-500',
-  'creator': 'bg-orange-500',
-  'nikitovsky': 'bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500',
-  'role24': 'bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500'
+  'client': 'bg-gray-600',
+  'cashier': 'bg-gray-700',
+  'head-cashier': 'bg-gray-800',
+  'admin': 'bg-black',
+  'creator': 'bg-gray-900',
+  'nikitovsky': 'bg-gradient-to-r from-gray-900 via-black to-purple-900',
+  'role24': 'bg-gradient-to-r from-black via-purple-900 to-black'
 };
 
 const ROLE_NAMES: Record<Exclude<UserRole, null>, string> = {
@@ -224,13 +224,13 @@ export default function Index() {
 
   if (!currentRole) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-slate-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md p-8 animate-scale-in shadow-2xl">
           <div className="text-center mb-8">
-            <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 rounded-2xl flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto mb-4 bg-black rounded-2xl flex items-center justify-center">
               <Icon name="QrCode" size={40} className="text-white" />
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold text-black">
               QR Документы
             </h1>
             <p className="text-muted-foreground mt-2">Система управления хранением</p>
@@ -332,7 +332,7 @@ export default function Index() {
 
               <Button
                 onClick={handleLogin}
-                className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                className="w-full h-12 text-lg font-semibold bg-black hover:bg-gray-900"
                 disabled={lockoutUntil !== null && Date.now() < lockoutUntil}
               >
                 Войти
@@ -348,11 +348,11 @@ export default function Index() {
   const clientArchive = currentRole === 'client' ? archive.filter(i => i.clientPhone === clientPhone) : archive;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-slate-100">
       <div className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center">
               <Icon name="QrCode" size={24} className="text-white" />
             </div>
             <div>
@@ -407,7 +407,7 @@ export default function Index() {
                 {clientItems.map((item) => (
                   <Card key={item.id} className="p-6 hover:shadow-lg transition-shadow animate-slide-up">
                     <div className="flex items-start justify-between mb-4">
-                      <Badge className="bg-purple-100 text-purple-700">{item.category}</Badge>
+                      <Badge className="bg-gray-100 text-gray-700">{item.category}</Badge>
                       <div className="text-right">
                         <div className="font-mono text-sm font-bold text-primary">{item.qrCode}</div>
                       </div>
@@ -443,7 +443,7 @@ export default function Index() {
                     {canIssueItems && currentRole !== 'client' && (
                       <Button
                         onClick={() => handleIssueItem(item.id)}
-                        className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                        className="w-full bg-black hover:bg-gray-900"
                       >
                         <Icon name="CheckCircle" size={18} className="mr-2" />
                         Выдать
@@ -560,7 +560,7 @@ export default function Index() {
 
                   <Button
                     onClick={handleCreateItem}
-                    className="w-full h-12 text-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                    className="w-full h-12 text-lg bg-black hover:bg-gray-900"
                   >
                     <Icon name="Plus" size={20} className="mr-2" />
                     Принять товар и создать QR
@@ -624,7 +624,7 @@ export default function Index() {
                 </h2>
                 
                 <div className="space-y-4">
-                  <div className="p-4 bg-purple-50 rounded-lg">
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <h3 className="font-semibold mb-2">Ваши права:</h3>
                     <ul className="space-y-1 text-sm">
                       <li className="flex items-center gap-2">
@@ -655,20 +655,20 @@ export default function Index() {
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-4">
-                    <Card className="p-4 bg-gradient-to-br from-purple-100 to-pink-100">
+                    <Card className="p-4 bg-gray-50 border border-gray-200">
                       <div className="flex items-center gap-2 mb-2">
-                        <Icon name="Package" size={20} className="text-purple-600" />
+                        <Icon name="Package" size={20} className="text-black" />
                         <span className="font-semibold">Товаров на хранении</span>
                       </div>
-                      <p className="text-3xl font-bold text-purple-600">{items.length}</p>
+                      <p className="text-3xl font-bold text-black">{items.length}</p>
                     </Card>
 
-                    <Card className="p-4 bg-gradient-to-br from-orange-100 to-red-100">
+                    <Card className="p-4 bg-gray-50 border border-gray-200">
                       <div className="flex items-center gap-2 mb-2">
-                        <Icon name="Archive" size={20} className="text-orange-600" />
+                        <Icon name="Archive" size={20} className="text-black" />
                         <span className="font-semibold">В архиве</span>
                       </div>
-                      <p className="text-3xl font-bold text-orange-600">{archive.length}</p>
+                      <p className="text-3xl font-bold text-black">{archive.length}</p>
                     </Card>
                   </div>
 

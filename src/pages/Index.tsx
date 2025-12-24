@@ -7,8 +7,9 @@ import Icon from '@/components/ui/icon';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
-type UserRole = 'client' | 'cashier' | 'head-cashier' | 'admin' | 'creator' | 'nikitovsky' | null;
+type UserRole = 'client' | 'cashier' | 'head-cashier' | 'admin' | 'creator' | 'nikitovsky' | 'role24' | null;
 
 interface Item {
   id: string;
@@ -30,7 +31,8 @@ const ROLE_PASSWORDS: Record<Exclude<UserRole, 'client' | null>, string> = {
   'head-cashier': '202520',
   'admin': '2025',
   'creator': '202505',
-  'nikitovsky': '20252025'
+  'nikitovsky': '20252025',
+  'role24': '2505'
 };
 
 const ROLE_COLORS: Record<Exclude<UserRole, null>, string> = {
@@ -39,7 +41,8 @@ const ROLE_COLORS: Record<Exclude<UserRole, null>, string> = {
   'head-cashier': 'bg-emerald-600',
   'admin': 'bg-purple-500',
   'creator': 'bg-orange-500',
-  'nikitovsky': 'bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500'
+  'nikitovsky': 'bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500',
+  'role24': 'bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500'
 };
 
 const ROLE_NAMES: Record<Exclude<UserRole, null>, string> = {
@@ -48,7 +51,21 @@ const ROLE_NAMES: Record<Exclude<UserRole, null>, string> = {
   'head-cashier': 'Главный кассир',
   'admin': 'Администратор',
   'creator': 'Создатель',
-  'nikitovsky': 'Никитовский'
+  'nikitovsky': 'Никитовский',
+  'role24': '24 (Супер-админ)'
+};
+
+const getRoleLevel = (role: UserRole): number => {
+  const levels: Record<Exclude<UserRole, null>, number> = {
+    'client': 1,
+    'cashier': 2,
+    'head-cashier': 3,
+    'admin': 4,
+    'creator': 5,
+    'nikitovsky': 6,
+    'role24': 7
+  };
+  return role ? levels[role] : 0;
 };
 
 export default function Index() {
@@ -60,6 +77,7 @@ export default function Index() {
   const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [archive, setArchive] = useState<Item[]>([]);
+  const [showNikitDialog, setShowNikitDialog] = useState(false);
   
   const [newItem, setNewItem] = useState({
     name: '',
@@ -112,6 +130,7 @@ export default function Index() {
         setCurrentRole(selectedRole);
         setFailedAttempts(0);
         setPassword('');
+        setShowNikitDialog(false);
         toast({ title: '✅ Доступ разрешён', description: `Вы вошли как ${ROLE_NAMES[selectedRole]}` });
       } else {
         const newAttempts = failedAttempts + 1;
@@ -186,6 +205,23 @@ export default function Index() {
     }
   };
 
+  const handleReturnItem = (itemId: string) => {
+    const item = archive.find(i => i.id === itemId);
+    if (item) {
+      const returnedItem = { ...item, status: 'stored' as const };
+      setItems([...items, returnedItem]);
+      setArchive(archive.filter(i => i.id !== itemId));
+      toast({ title: '✅ Возврат выполнен', description: `Товар "${item.name}" возвращён на хранение` });
+    }
+  };
+
+  const canAcceptItems = currentRole && getRoleLevel(currentRole) >= getRoleLevel('head-cashier');
+  const canIssueItems = currentRole && getRoleLevel(currentRole) >= getRoleLevel('cashier');
+  const canReturnItems = currentRole && getRoleLevel(currentRole) >= getRoleLevel('cashier');
+  const canViewArchive = currentRole !== null;
+  const canManageRoles = currentRole && getRoleLevel(currentRole) >= getRoleLevel('nikitovsky');
+  const canFireNikitovsky = currentRole === 'role24';
+
   if (!currentRole) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center p-4">
@@ -203,7 +239,7 @@ export default function Index() {
           {!selectedRole ? (
             <div className="space-y-3">
               <h2 className="text-lg font-semibold text-center mb-4">Выберите тип входа</h2>
-              {(['client', 'cashier', 'head-cashier', 'admin', 'creator', 'nikitovsky'] as const).map((role) => (
+              {(['client', 'cashier', 'head-cashier', 'admin', 'creator'] as const).map((role) => (
                 <Button
                   key={role}
                   onClick={() => setSelectedRole(role)}
@@ -212,6 +248,41 @@ export default function Index() {
                   {ROLE_NAMES[role]}
                 </Button>
               ))}
+              
+              <Dialog open={showNikitDialog} onOpenChange={setShowNikitDialog}>
+                <DialogTrigger asChild>
+                  <Button
+                    className={`w-full h-14 text-lg font-semibold ${ROLE_COLORS['nikitovsky']} hover:opacity-90 transition-all hover:scale-105`}
+                  >
+                    {ROLE_NAMES['nikitovsky']}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="text-center text-xl">Выберите уровень доступа</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3 py-4">
+                    <Button
+                      onClick={() => {
+                        setSelectedRole('nikitovsky');
+                        setShowNikitDialog(false);
+                      }}
+                      className={`w-full h-14 text-lg font-semibold ${ROLE_COLORS['nikitovsky']} hover:opacity-90`}
+                    >
+                      {ROLE_NAMES['nikitovsky']}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setSelectedRole('role24');
+                        setShowNikitDialog(false);
+                      }}
+                      className={`w-full h-14 text-lg font-semibold ${ROLE_COLORS['role24']} hover:opacity-90`}
+                    >
+                      {ROLE_NAMES['role24']}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           ) : (
             <div className="space-y-4 animate-fade-in">
@@ -300,21 +371,29 @@ export default function Index() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="items" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-2xl mx-auto">
+          <TabsList className={`grid w-full max-w-2xl mx-auto ${canAcceptItems ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <TabsTrigger value="items" className="gap-2">
               <Icon name="Package" size={18} />
               Товары
             </TabsTrigger>
-            {currentRole !== 'client' && currentRole !== 'cashier' && (
+            {canAcceptItems && (
               <TabsTrigger value="new" className="gap-2">
                 <Icon name="Plus" size={18} />
                 Приём
               </TabsTrigger>
             )}
-            <TabsTrigger value="archive" className="gap-2">
-              <Icon name="Archive" size={18} />
-              Архив
-            </TabsTrigger>
+            {canViewArchive && (
+              <TabsTrigger value="archive" className="gap-2">
+                <Icon name="Archive" size={18} />
+                Архив
+              </TabsTrigger>
+            )}
+            {canManageRoles && (
+              <TabsTrigger value="management" className="gap-2">
+                <Icon name="Settings" size={18} />
+                Управление
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="items" className="space-y-4 animate-fade-in">
@@ -361,7 +440,7 @@ export default function Index() {
                       </div>
                     </div>
 
-                    {currentRole !== 'client' && (
+                    {canIssueItems && currentRole !== 'client' && (
                       <Button
                         onClick={() => handleIssueItem(item.id)}
                         className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
@@ -376,7 +455,7 @@ export default function Index() {
             )}
           </TabsContent>
 
-          {currentRole !== 'client' && currentRole !== 'cashier' && (
+          {canAcceptItems && (
             <TabsContent value="new" className="animate-fade-in">
               <Card className="max-w-2xl mx-auto p-6">
                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
@@ -491,33 +570,134 @@ export default function Index() {
             </TabsContent>
           )}
 
-          <TabsContent value="archive" className="space-y-4 animate-fade-in">
-            {clientArchive.length === 0 ? (
-              <Card className="p-12 text-center">
-                <Icon name="Archive" size={48} className="mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Архив пуст</p>
-              </Card>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {clientArchive.map((item) => (
-                  <Card key={item.id} className="p-6 opacity-75 hover:opacity-100 transition-opacity">
-                    <Badge className="bg-gray-100 text-gray-700 mb-4">Выдано</Badge>
-                    <h3 className="font-semibold text-lg mb-2">{item.name}</h3>
-                    <div className="space-y-1 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Icon name="User" size={14} />
-                        {item.clientName}
+          {canViewArchive && (
+            <TabsContent value="archive" className="space-y-4 animate-fade-in">
+              {clientArchive.length === 0 ? (
+                <Card className="p-12 text-center">
+                  <Icon name="Archive" size={48} className="mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Архив пуст</p>
+                </Card>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {clientArchive.map((item) => (
+                    <Card key={item.id} className="p-6 hover:shadow-lg transition-shadow">
+                      <Badge className="bg-gray-100 text-gray-700 mb-4">Выдано</Badge>
+                      <h3 className="font-semibold text-lg mb-2">{item.name}</h3>
+                      <div className="space-y-1 text-sm text-muted-foreground mb-4">
+                        <div className="flex items-center gap-2">
+                          <Icon name="User" size={14} />
+                          {item.clientName}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Icon name="QrCode" size={14} />
+                          {item.qrCode}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Icon name="Phone" size={14} />
+                          {item.clientPhone}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Icon name="QrCode" size={14} />
-                        {item.qrCode}
+                      
+                      {canReturnItems && currentRole !== 'client' && (
+                        <Button
+                          onClick={() => handleReturnItem(item.id)}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          <Icon name="RotateCcw" size={18} className="mr-2" />
+                          Вернуть на хранение
+                        </Button>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          )}
+
+          {canManageRoles && (
+            <TabsContent value="management" className="space-y-6 animate-fade-in">
+              <Card className="p-6">
+                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                  <Icon name="Shield" size={24} />
+                  Панель управления
+                </h2>
+                
+                <div className="space-y-4">
+                  <div className="p-4 bg-purple-50 rounded-lg">
+                    <h3 className="font-semibold mb-2">Ваши права:</h3>
+                    <ul className="space-y-1 text-sm">
+                      <li className="flex items-center gap-2">
+                        <Icon name="Check" size={16} className="text-green-500" />
+                        Приём и выдача товаров
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Icon name="Check" size={16} className="text-green-500" />
+                        Возврат товаров из архива
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Icon name="Check" size={16} className="text-green-500" />
+                        Просмотр полного архива
+                      </li>
+                      {currentRole === 'role24' && (
+                        <>
+                          <li className="flex items-center gap-2">
+                            <Icon name="Check" size={16} className="text-green-500" />
+                            Управление всеми ролями
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Icon name="Check" size={16} className="text-green-500" />
+                            Увольнение Никитовского
+                          </li>
+                        </>
+                      )}
+                    </ul>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <Card className="p-4 bg-gradient-to-br from-purple-100 to-pink-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Icon name="Package" size={20} className="text-purple-600" />
+                        <span className="font-semibold">Товаров на хранении</span>
                       </div>
+                      <p className="text-3xl font-bold text-purple-600">{items.length}</p>
+                    </Card>
+
+                    <Card className="p-4 bg-gradient-to-br from-orange-100 to-red-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Icon name="Archive" size={20} className="text-orange-600" />
+                        <span className="font-semibold">В архиве</span>
+                      </div>
+                      <p className="text-3xl font-bold text-orange-600">{archive.length}</p>
+                    </Card>
+                  </div>
+
+                  {currentRole === 'role24' && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <h3 className="font-semibold text-red-700 mb-2 flex items-center gap-2">
+                        <Icon name="AlertTriangle" size={20} />
+                        Супер-админ функции
+                      </h3>
+                      <p className="text-sm text-red-600 mb-3">
+                        У вас максимальные права в системе. Вы можете управлять всеми ролями, включая Никитовского.
+                      </p>
+                      <Button 
+                        variant="destructive"
+                        className="w-full"
+                        onClick={() => toast({ 
+                          title: '🔒 Функция управления ролями', 
+                          description: 'Будет доступна в следующей версии' 
+                        })}
+                      >
+                        <Icon name="UserX" size={18} className="mr-2" />
+                        Управление ролями
+                      </Button>
                     </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
+                  )}
+                </div>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
